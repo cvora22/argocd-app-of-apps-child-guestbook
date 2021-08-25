@@ -3,5 +3,5 @@ kind: Kustomization
 bases:
 - ../../base
 patchesStrategicMerge:
-- node_selector.yaml
+- node_selector.yml
 namespace: monitoring

@@ -17,7 +17,14 @@ spec:
     namespace: monitoring
   hostPath:
     path: "/tmp/prometheus0"
-
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - docker-desktop
 ---
 kind: PersistentVolume
 apiVersion: v1
@@ -38,3 +45,11 @@ spec:
     namespace: monitoring
   hostPath:
     path: "/tmp/grafana0"
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - docker-desktop

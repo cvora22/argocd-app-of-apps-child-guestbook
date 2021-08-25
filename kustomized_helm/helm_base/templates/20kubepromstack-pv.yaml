@@ -18,14 +18,6 @@ spec:
     namespace: monitoring
   local:
     path: "/mnt/prometheus0"
-  nodeAffinity:
-    required:
-      nodeSelectorTerms:
-        - matchExpressions:
-            - key: kubernetes.io/hostname
-              operator: In
-              values:
-                - docker-desktop
 
 ---
 kind: PersistentVolume
@@ -48,11 +40,3 @@ spec:
     namespace: monitoring
   local:
     path: "/mnt/grafana0"
-  nodeAffinity:
-    required:
-      nodeSelectorTerms:
-        - matchExpressions:
-            - key: kubernetes.io/hostname
-              operator: In
-              values:
-                - docker-desktop

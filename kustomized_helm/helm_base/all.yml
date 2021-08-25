@@ -1,0 +1,1005 @@
+---
+# Source: kube-prometheus-stack/templates/10kubepromstack-namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/podsecuritypolicy.yaml
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: prometheus-grafana
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'docker/default,runtime/default'
+    seccomp.security.alpha.kubernetes.io/defaultProfileName:  'docker/default'
+    apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default'
+    apparmor.security.beta.kubernetes.io/defaultProfileName:  'runtime/default'
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    # Default set from Docker, with DAC_OVERRIDE and CHOWN
+      - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'csi'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 1
+        max: 65535
+  readOnlyRootFilesystem: false
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/tests/test-podsecuritypolicy.yaml
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: prometheus-grafana-test
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  allowPrivilegeEscalation: true
+  privileged: false
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  fsGroup:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  runAsUser:
+    rule: RunAsAny
+  volumes:
+  - configMap
+  - downwardAPI
+  - emptyDir
+  - projected
+  - csi
+  - secret
+---
+# Source: kube-prometheus-stack/charts/prometheus-node-exporter/templates/psp.yaml
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: prometheus-prometheus-node-exporter
+  namespace: monitoring
+  labels:     
+    app: prometheus-node-exporter
+    heritage: Helm
+    release: prometheus
+    chart: prometheus-node-exporter-2.0.4
+spec:
+  privileged: false
+  # Required to prevent escalations to root.
+  # allowPrivilegeEscalation: false
+  # This is redundant with non-root + disallow privilege escalation,
+  # but we can provide it for defense in depth.
+  #requiredDropCapabilities:
+  #  - ALL
+  # Allow core volume types.
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+    - 'hostPath'
+  hostNetwork: true
+  hostIPC: false
+  hostPID: true
+  hostPorts:
+    - min: 0
+      max: 65535
+  runAsUser:
+    # Permits the container to run with root privileges as well.
+    rule: 'RunAsAny'
+  seLinux:
+    # This policy assumes the nodes are using AppArmor rather than SELinux.
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 0
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 0
+        max: 65535
+  readOnlyRootFilesystem: false
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+  name: prometheus-grafana
+  namespace: monitoring
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/tests/test-serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+  name: prometheus-grafana-test
+  namespace: monitoring
+---
+# Source: kube-prometheus-stack/charts/kube-state-metrics/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    helm.sh/chart: kube-state-metrics-3.4.2
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: prometheus
+  name: prometheus-kube-state-metrics
+  namespace: monitoring
+imagePullSecrets:
+  []
+---
+# Source: kube-prometheus-stack/charts/prometheus-node-exporter/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-prometheus-node-exporter
+  namespace: monitoring
+  labels:
+    app: prometheus-node-exporter
+    chart: prometheus-node-exporter-2.0.4
+    release: "prometheus"
+    heritage: "Helm"
+  annotations:
+    {}
+imagePullSecrets:
+  []
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: prometheus-grafana
+  namespace: monitoring
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+type: Opaque
+data:
+  admin-user: "YWRtaW4="
+  admin-password: "NDA0Tm90Rm91bmQ="
+  ldap-toml: ""
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-grafana
+  namespace: monitoring
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+data:
+  grafana.ini: |
+    [analytics]
+    check_for_updates = true
+    [grafana_net]
+    url = https://grafana.net
+    [log]
+    mode = console
+    [paths]
+    data = /var/lib/grafana/
+    logs = /var/log/grafana
+    plugins = /var/lib/grafana/plugins
+    provisioning = /etc/grafana/provisioning
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/tests/test-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-grafana-test
+  namespace: monitoring
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+data:
+  run.sh: |-
+    @test "Test Health" {
+      url="http://prometheus-grafana/api/health"
+
+      code=$(wget --server-response --spider --timeout 10 --tries 1 ${url} 2>&1 | awk '/^  HTTP/{print $2}')
+      [ "$code" == "200" ]
+    }
+---
+# Source: kube-prometheus-stack/templates/20kubepromstack-pv.yaml
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: prometheus-pv
+  namespace: monitoring
+  labels:
+    type: local
+    purpose: prometheus
+spec:
+  storageClassName: local
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    name: prometheus-prometheus-kube-prometheus-prometheus-db-prometheus-prometheus-kube-prometheus-prometheus-0
+    namespace: monitoring
+  local:
+    path: "/mnt/prometheus0"
+---
+# Source: kube-prometheus-stack/templates/20kubepromstack-pv.yaml
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: grafana-pv
+  namespace: monitoring
+  labels:
+    type: local
+    purpose: grafana
+spec:
+  storageClassName: local
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    name: prometheus-grafana
+    namespace: monitoring
+  local:
+    path: "/mnt/grafana0"
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-grafana
+  namespace: monitoring
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+  finalizers:
+    - kubernetes.io/pvc-protection
+spec:
+  accessModes:
+    - "ReadWriteOnce"
+  resources:
+    requests:
+      storage: "10Gi"
+  storageClassName: local
+  selector:
+    matchLabels:
+      purpose: grafana
+      type: local
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/clusterrole.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+  name: prometheus-grafana-clusterrole
+rules: []
+---
+# Source: kube-prometheus-stack/charts/kube-state-metrics/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    helm.sh/chart: kube-state-metrics-3.4.2
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: prometheus
+  name: prometheus-kube-state-metrics
+rules:
+
+- apiGroups: ["certificates.k8s.io"]
+  resources:
+  - certificatesigningrequests
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - configmaps
+  verbs: ["list", "watch"]
+
+- apiGroups: ["batch"]
+  resources:
+  - cronjobs
+  verbs: ["list", "watch"]
+
+- apiGroups: ["extensions", "apps"]
+  resources:
+  - daemonsets
+  verbs: ["list", "watch"]
+
+- apiGroups: ["extensions", "apps"]
+  resources:
+  - deployments
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - endpoints
+  verbs: ["list", "watch"]
+
+- apiGroups: ["autoscaling"]
+  resources:
+  - horizontalpodautoscalers
+  verbs: ["list", "watch"]
+
+- apiGroups: ["extensions", "networking.k8s.io"]
+  resources:
+  - ingresses
+  verbs: ["list", "watch"]
+
+- apiGroups: ["batch"]
+  resources:
+  - jobs
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - limitranges
+  verbs: ["list", "watch"]
+
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources:
+    - mutatingwebhookconfigurations
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - namespaces
+  verbs: ["list", "watch"]
+
+- apiGroups: ["networking.k8s.io"]
+  resources:
+  - networkpolicies
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - nodes
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - persistentvolumeclaims
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - persistentvolumes
+  verbs: ["list", "watch"]
+
+- apiGroups: ["policy"]
+  resources:
+    - poddisruptionbudgets
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - pods
+  verbs: ["list", "watch"]
+
+- apiGroups: ["extensions", "apps"]
+  resources:
+  - replicasets
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - replicationcontrollers
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - resourcequotas
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - secrets
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - services
+  verbs: ["list", "watch"]
+
+- apiGroups: ["apps"]
+  resources:
+  - statefulsets
+  verbs: ["list", "watch"]
+
+- apiGroups: ["storage.k8s.io"]
+  resources:
+    - storageclasses
+  verbs: ["list", "watch"]
+
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources:
+    - validatingwebhookconfigurations
+  verbs: ["list", "watch"]
+
+- apiGroups: ["storage.k8s.io"]
+  resources:
+    - volumeattachments
+  verbs: ["list", "watch"]
+---
+# Source: kube-prometheus-stack/charts/prometheus-node-exporter/templates/psp-clusterrole.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: psp-prometheus-prometheus-node-exporter
+  labels:     
+    app: prometheus-node-exporter
+    heritage: Helm
+    release: prometheus
+    chart: prometheus-node-exporter-2.0.4
+rules:
+- apiGroups: ['extensions']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - prometheus-prometheus-node-exporter
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/clusterrolebinding.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: prometheus-grafana-clusterrolebinding
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+subjects:
+  - kind: ServiceAccount
+    name: prometheus-grafana
+    namespace: monitoring
+roleRef:
+  kind: ClusterRole
+  name: prometheus-grafana-clusterrole
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: kube-prometheus-stack/charts/kube-state-metrics/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    helm.sh/chart: kube-state-metrics-3.4.2
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: prometheus
+  name: prometheus-kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-kube-state-metrics
+subjects:
+- kind: ServiceAccount
+  name: prometheus-kube-state-metrics
+  namespace: monitoring
+---
+# Source: kube-prometheus-stack/charts/prometheus-node-exporter/templates/psp-clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: psp-prometheus-prometheus-node-exporter
+  labels:     
+    app: prometheus-node-exporter
+    heritage: Helm
+    release: prometheus
+    chart: prometheus-node-exporter-2.0.4
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: psp-prometheus-prometheus-node-exporter
+subjects:
+  - kind: ServiceAccount
+    name: prometheus-prometheus-node-exporter
+    namespace: monitoring
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-grafana
+  namespace: monitoring
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+rules:
+- apiGroups:      ['extensions']
+  resources:      ['podsecuritypolicies']
+  verbs:          ['use']
+  resourceNames:  [prometheus-grafana]
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/tests/test-role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-grafana-test
+  namespace: monitoring
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+rules:
+- apiGroups:      ['policy']
+  resources:      ['podsecuritypolicies']
+  verbs:          ['use']
+  resourceNames:  [prometheus-grafana-test]
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-grafana
+  namespace: monitoring
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prometheus-grafana
+subjects:
+- kind: ServiceAccount
+  name: prometheus-grafana
+  namespace: monitoring
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/tests/test-rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-grafana-test
+  namespace: monitoring
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prometheus-grafana-test
+subjects:
+- kind: ServiceAccount
+  name: prometheus-grafana-test
+  namespace: monitoring
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-grafana
+  namespace: monitoring
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - name: service
+      port: 80
+      protocol: TCP
+      targetPort: 3000
+
+  selector:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+---
+# Source: kube-prometheus-stack/charts/kube-state-metrics/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-kube-state-metrics
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    helm.sh/chart: "kube-state-metrics-3.4.2"
+    app.kubernetes.io/instance: "prometheus"
+    app.kubernetes.io/managed-by: "Helm"
+  annotations:
+    prometheus.io/scrape: 'true'
+spec:
+  type: "ClusterIP"
+  ports:
+  - name: "http"
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+  
+  selector:
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: prometheus
+---
+# Source: kube-prometheus-stack/charts/prometheus-node-exporter/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-prometheus-node-exporter
+  namespace: monitoring
+  annotations:
+    prometheus.io/scrape: "true"
+  labels:     
+    app: prometheus-node-exporter
+    heritage: Helm
+    release: prometheus
+    chart: prometheus-node-exporter-2.0.4
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9100
+      targetPort: 9100
+      protocol: TCP
+      name: metrics
+  selector:
+    app: prometheus-node-exporter
+    release: prometheus
+---
+# Source: kube-prometheus-stack/charts/prometheus-node-exporter/templates/daemonset.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: prometheus-prometheus-node-exporter
+  namespace: monitoring
+  labels:     
+    app: prometheus-node-exporter
+    heritage: Helm
+    release: prometheus
+    chart: prometheus-node-exporter-2.0.4
+spec:
+  selector:
+    matchLabels:
+      app: prometheus-node-exporter
+      release: prometheus
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:         
+        app: prometheus-node-exporter
+        heritage: Helm
+        release: prometheus
+        chart: prometheus-node-exporter-2.0.4
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+    spec:
+      automountServiceAccountToken: false
+      serviceAccountName: prometheus-prometheus-node-exporter
+      securityContext:
+        fsGroup: 65534
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+      containers:
+        - name: node-exporter
+          image: "quay.io/prometheus/node-exporter:v1.2.2"
+          imagePullPolicy: IfNotPresent
+          args:
+            - --path.procfs=/host/proc
+            - --path.sysfs=/host/sys
+            - --path.rootfs=/host/root
+            - --web.listen-address=$(HOST_IP):9100
+          env:
+          - name: HOST_IP
+            value: 0.0.0.0
+          ports:
+            - name: metrics
+              containerPort: 9100
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9100
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9100
+          resources:
+            {}
+          volumeMounts:
+            - name: proc
+              mountPath: /host/proc
+              readOnly:  true
+            - name: sys
+              mountPath: /host/sys
+              readOnly: true
+            - name: root
+              mountPath: /host/root
+              mountPropagation: HostToContainer
+              readOnly: true
+      hostNetwork: true
+      hostPID: true
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+      volumes:
+        - name: proc
+          hostPath:
+            path: /proc
+        - name: sys
+          hostPath:
+            path: /sys
+        - name: root
+          hostPath:
+            path: /
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-grafana
+  namespace: monitoring
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: prometheus
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: grafana
+        app.kubernetes.io/instance: prometheus
+      annotations:
+        checksum/config: b462878403a0307859be0d63c450276adb3748115bbb1c578f0ebc8d10c192eb
+        checksum/dashboards-json-config: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+        checksum/sc-dashboard-provider-config: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+        checksum/secret: 9e0dc270d51ac949c92cedcde76dd09cd2766ef28bafe46e264e840be85fd05b
+    spec:
+      
+      serviceAccountName: prometheus-grafana
+      automountServiceAccountToken: true
+      securityContext:
+        fsGroup: 472
+        runAsGroup: 472
+        runAsUser: 472
+      initContainers:
+        - name: init-chown-data
+          image: "busybox:1.31.1"
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+          command: ["chown", "-R", "472:472", "/var/lib/grafana"]
+          resources:
+            {}
+          volumeMounts:
+            - name: storage
+              mountPath: "/var/lib/grafana"
+      enableServiceLinks: true
+      containers:
+        - name: grafana
+          image: "grafana/grafana:8.0.5"
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: config
+              mountPath: "/etc/grafana/grafana.ini"
+              subPath: grafana.ini
+            - name: storage
+              mountPath: "/var/lib/grafana"
+          ports:
+            - name: service
+              containerPort: 80
+              protocol: TCP
+            - name: grafana
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: prometheus-grafana
+                  key: admin-user
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: prometheus-grafana
+                  key: admin-password
+            
+            - name: GF_PATHS_DATA
+              value: /var/lib/grafana/
+            - name: GF_PATHS_LOGS
+              value: /var/log/grafana
+            - name: GF_PATHS_PLUGINS
+              value: /var/lib/grafana/plugins
+            - name: GF_PATHS_PROVISIONING
+              value: /etc/grafana/provisioning
+          livenessProbe:
+            failureThreshold: 10
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 60
+            timeoutSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+          resources:
+            {}
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-grafana
+        - name: storage
+          persistentVolumeClaim:
+            claimName: prometheus-grafana
+---
+# Source: kube-prometheus-stack/charts/kube-state-metrics/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-kube-state-metrics
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    helm.sh/chart: "kube-state-metrics-3.4.2"
+    app.kubernetes.io/instance: "prometheus"
+    app.kubernetes.io/managed-by: "Helm"
+    app.kubernetes.io/version: "2.1.1"
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-state-metrics
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kube-state-metrics
+        app.kubernetes.io/instance: "prometheus"
+    spec:
+      hostNetwork: false
+      serviceAccountName: prometheus-kube-state-metrics
+      securityContext:
+        fsGroup: 65534
+        runAsGroup: 65534
+        runAsUser: 65534
+      containers:
+      - name: kube-state-metrics
+        args:
+        - --port=8080
+        - --resources=certificatesigningrequests,configmaps,cronjobs,daemonsets,deployments,endpoints,horizontalpodautoscalers,ingresses,jobs,limitranges,mutatingwebhookconfigurations,namespaces,networkpolicies,nodes,persistentvolumeclaims,persistentvolumes,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets,storageclasses,validatingwebhookconfigurations,volumeattachments
+        - --telemetry-port=8081
+        imagePullPolicy: IfNotPresent
+        image: "k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.1.1"
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+---
+# Source: kube-prometheus-stack/charts/grafana/templates/tests/test.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prometheus-grafana-test
+  labels:
+    helm.sh/chart: grafana-6.14.2
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: "8.0.5"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test-success
+  namespace: monitoring
+spec:
+  serviceAccountName: prometheus-grafana-test
+  containers:
+    - name: prometheus-test
+      image: "bats/bats:v1.1.0"
+      imagePullPolicy: "IfNotPresent"
+      command: ["/opt/bats/bin/bats", "-t", "/tests/run.sh"]
+      volumeMounts:
+        - mountPath: /tests
+          name: tests
+          readOnly: true
+  volumes:
+  - name: tests
+    configMap:
+      name: prometheus-grafana-test
+  restartPolicy: Never

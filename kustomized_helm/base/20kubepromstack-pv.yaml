@@ -2,21 +2,20 @@ kind: PersistentVolume
 apiVersion: v1
 metadata:
   name: prometheus-pv
-  namespace: monitoring
   labels:
     type: local
     purpose: prometheus
 spec:
-  storageClassName: local
+  storageClassName: manual
   capacity:
-    storage: 10Gi
+    storage: 1Gi
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   claimRef:
     name: prometheus-prometheus-kube-prometheus-prometheus-db-prometheus-prometheus-kube-prometheus-prometheus-0
     namespace: monitoring
-  local:
+  hostPath:
     path: "/tmp/prometheus0"
 
 ---
@@ -24,19 +23,18 @@ kind: PersistentVolume
 apiVersion: v1
 metadata:
   name: grafana-pv
-  namespace: monitoring
   labels:
     type: local
     purpose: grafana
 spec:
   storageClassName: local
   capacity:
-    storage: 10Gi
+    storage: 1Gi
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   claimRef:
     name: prometheus-grafana
     namespace: monitoring
-  local:
+  hostPath:
     path: "/tmp/grafana0"

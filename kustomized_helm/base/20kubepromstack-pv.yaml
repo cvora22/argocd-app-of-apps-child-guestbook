@@ -17,7 +17,7 @@ spec:
     name: prometheus-prometheus-kube-prometheus-prometheus-db-prometheus-prometheus-kube-prometheus-prometheus-0
     namespace: monitoring
   local:
-    path: "/mnt/prometheus0"
+    path: "/tmp/prometheus0"
 
 ---
 kind: PersistentVolume
@@ -39,4 +39,4 @@ spec:
     name: prometheus-grafana
     namespace: monitoring
   local:
-    path: "/mnt/grafana0"
+    path: "/tmp/grafana0"

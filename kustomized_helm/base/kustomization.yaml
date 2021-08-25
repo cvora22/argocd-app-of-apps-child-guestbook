@@ -5,3 +5,5 @@ resources:
 - 10kubepromstack-namespace.yml
 - 20kubepromstack-pv.yml
 - 30kubepromstack.yml
+
+namespace: monitoring

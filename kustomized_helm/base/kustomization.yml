@@ -1,6 +1,0 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-- 10kubepromstack-namespace.yml
-- 20kubepromstack-pv.yml
-- 30kubepromstack.yml

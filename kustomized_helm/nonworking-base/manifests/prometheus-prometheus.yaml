@@ -43,5 +43,7 @@ spec:
     runAsUser: 1000
   serviceAccountName: prometheus-k8s
   serviceMonitorNamespaceSelector: {}
-  serviceMonitorSelector: {}
+  serviceMonitorSelector:
+    matchLabels:
+      release: prometheus
   version: 2.29.1

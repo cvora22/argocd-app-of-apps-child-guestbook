@@ -1,0 +1,19 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: grafana-pv
+  labels:
+    type: local
+    purpose: grafana
+spec:
+  storageClassName: local
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    name: pvc-persistent-grafana
+    namespace: monitoring
+  hostPath:
+    path: "/tmp"

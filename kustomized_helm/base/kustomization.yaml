@@ -18,6 +18,8 @@ resources:
 - ./manifests/grafana-dashboardDatasources.yaml
 - ./manifests/grafana-dashboardDefinitions.yaml
 - ./manifests/grafana-dashboardSources.yaml
+- ./manifests/grafana-pv.yaml
+- ./manifests/grafana-pvc.yaml
 - ./manifests/grafana-deployment.yaml
 - ./manifests/grafana-service.yaml
 - ./manifests/grafana-serviceAccount.yaml

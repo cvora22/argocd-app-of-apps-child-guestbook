@@ -126,8 +126,8 @@ spec:
         beta.kubernetes.io/os: linux
       securityContext:
         fsGroup: 65534
-        runAsNonRoot: true
-        runAsUser: 65534
+        runAsNonRoot: false
+        runAsUser: 0
       serviceAccountName: grafana
       volumes:
       - name: grafana-storage

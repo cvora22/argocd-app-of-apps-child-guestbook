@@ -44,4 +44,15 @@ spec:
   serviceAccountName: prometheus-k8s
   serviceMonitorNamespaceSelector: {}
   serviceMonitorSelector: {}
+  storage:
+    volumeClaimTemplate:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: manual
   version: 2.29.1

@@ -35,12 +35,13 @@ spec:
   resources:
     requests:
       memory: 400Mi
+  retention: 30d
   ruleNamespaceSelector: {}
   ruleSelector: {}
   securityContext:
     fsGroup: 2000
     runAsNonRoot: true
-    runAsUser: 1000
+    runAsUser: 0
   serviceAccountName: prometheus-k8s
   serviceMonitorNamespaceSelector: {}
   serviceMonitorSelector:

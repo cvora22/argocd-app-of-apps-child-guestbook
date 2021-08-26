@@ -1,0 +1,19 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: prometheus-pv
+  labels:
+    type: local
+    purpose: prometheus
+spec:
+  storageClassName: local
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    name: prometheus-k8s-db-prometheus-k8s-0
+    namespace: monitoring
+  hostPath:
+    path: "/tmp"

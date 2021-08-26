@@ -35,6 +35,7 @@ spec:
   resources:
     requests:
       memory: 400Mi
+  retention: 30d
   ruleNamespaceSelector: {}
   ruleSelector: {}
   securityContext:

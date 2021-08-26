@@ -35,27 +35,15 @@ spec:
   resources:
     requests:
       memory: 400Mi
-  retention: 30d
   ruleNamespaceSelector: {}
   ruleSelector: {}
   securityContext:
     fsGroup: 2000
-    runAsNonRoot: false
-    runAsUser: 0
+    runAsNonRoot: true
+    runAsUser: 1000
   serviceAccountName: prometheus-k8s
   serviceMonitorNamespaceSelector: {}
   serviceMonitorSelector:
     matchLabels:
       release: prometheus
-#  storage:
-#    volumeClaimTemplate:
-#      apiVersion: v1
-#      kind: PersistentVolumeClaim
-#      spec:
-#        accessModes:
-#        - ReadWriteOnce
-#        resources:
-#          requests:
-#            storage: 1Gi
-#        storageClassName: manual
   version: 2.29.1

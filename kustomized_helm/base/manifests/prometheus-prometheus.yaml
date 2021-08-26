@@ -47,15 +47,15 @@ spec:
   serviceMonitorSelector:
     matchLabels:
       release: prometheus
-  storage:
-    volumeClaimTemplate:
-      apiVersion: v1
-      kind: PersistentVolumeClaim
-      spec:
-        accessModes:
-        - ReadWriteOnce
-        resources:
-          requests:
-            storage: 1Gi
-        storageClassName: manual
+#  storage:
+#    volumeClaimTemplate:
+#      apiVersion: v1
+#      kind: PersistentVolumeClaim
+#      spec:
+#        accessModes:
+#        - ReadWriteOnce
+#        resources:
+#          requests:
+#            storage: 1Gi
+#        storageClassName: manual
   version: 2.29.1

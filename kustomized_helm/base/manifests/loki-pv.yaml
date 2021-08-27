@@ -17,5 +17,5 @@ spec:
   claimRef:
     name: storage-loki-0
     namespace: monitoring
-  local:
+  hostPath:
     path: "/tmp"

@@ -813,7 +813,7 @@ spec:
         resources:
           requests:
             storage: "10Gi"
-        storageClassName:
+        storageClassName: local
         selector:
           matchLabels:
             purpose: loki

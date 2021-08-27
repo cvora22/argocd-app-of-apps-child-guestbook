@@ -3,7 +3,6 @@ kind: PersistentVolume
 apiVersion: v1
 metadata:
   name: loki-pv-0
-  namespace: monitoring
   labels:
     type: local
     purpose: loki

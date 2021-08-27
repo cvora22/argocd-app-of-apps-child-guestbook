@@ -1,0 +1,21 @@
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: loki-pv-0
+  namespace: monitoring
+  labels:
+    type: local
+    purpose: loki
+spec:
+  storageClassName: local
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    name: storage-loki-0
+    namespace: monitoring
+  local:
+    path: "/tmp"

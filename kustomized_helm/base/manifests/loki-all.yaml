@@ -803,10 +803,6 @@ spec:
           secret:
             secretName: loki
   volumeClaimTemplates:
-    - metadata:
-        name: storage
-        annotations:
-          {}
       spec:
         accessModes:
           - ReadWriteOnce
